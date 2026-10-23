@@ -6,7 +6,7 @@ type GeminiResponse = {
   promptFeedback?: { blockReason?: string };
 };
 
-export function createGeminiProvider(apiKey: string, model: string): Provider {
+export function createGeminiProvider(apiKey: string, model: string, thinkingLevel?: string): Provider {
   return {
     id: "gemini",
     async rewrite({ prompt, signal, fetch }) {
@@ -26,6 +26,7 @@ export function createGeminiProvider(apiKey: string, model: string): Provider {
               properties: { rewritten_text: { type: "STRING" } },
               required: ["rewritten_text"],
             },
+            ...(thinkingLevel ? { thinkingConfig: { thinkingLevel } } : {}),
           },
         },
         signal,

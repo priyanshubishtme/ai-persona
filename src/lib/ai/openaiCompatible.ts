@@ -6,7 +6,12 @@ type ChatCompletionResponse = {
 };
 
 /** Any API that implements OpenAI's chat completions format (OpenAI, OpenRouter, Groq, ...). */
-export function createOpenAiCompatibleProvider(apiKey: string, baseUrl: string, model: string): Provider {
+export function createOpenAiCompatibleProvider(
+  apiKey: string,
+  baseUrl: string,
+  model: string,
+  reasoningEffort?: string,
+): Provider {
   const endpoint = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
   return {
     id: "openai_compatible",
@@ -19,6 +24,7 @@ export function createOpenAiCompatibleProvider(apiKey: string, baseUrl: string, 
           model,
           temperature: 0.4,
           response_format: { type: "json_object" },
+          ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
           messages: [
             { role: "system", content: prompt.system },
             { role: "user", content: prompt.user },
