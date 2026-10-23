@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "python3 scripts/log_prompt.py setup --quiet-json || true",
+        "powershell": "python scripts/log_prompt.py setup --quiet-json; exit 0",
+        "timeoutSec": 15
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": "python3 scripts/log_prompt.py hook --tool copilot || true",
+        "powershell": "python scripts/log_prompt.py hook --tool copilot; exit 0",
+        "timeoutSec": 10
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "python3 scripts/log_prompt.py guard",
+        "powershell": "python scripts/log_prompt.py guard",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

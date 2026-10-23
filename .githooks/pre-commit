@@ -1,0 +1,7 @@
+#!/bin/sh
+# Blocks any commit that changes or deletes an existing AI prompt log line. Enable once per clone:
+#   git config core.hooksPath .githooks
+python3 scripts/log_prompt.py verify --staged --base HEAD || {
+  echo "Commit blocked: AI prompt logs are append-only. Undo your edits to existing lines in .ai-analytics/ (new lines are fine)."
+  exit 1
+}

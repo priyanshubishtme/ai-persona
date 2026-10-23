@@ -1,0 +1,61 @@
+name: ai-governance
+# pull_request_target runs THIS file and script from the base branch, so a PR cannot weaken the check
+# by editing the workflow or script in the same PR. PR code is only read with git, never executed.
+on:
+  pull_request_target:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  issues: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Pick the commits to compare
+        id: refs
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request_target" ]; then
+            git fetch -q origin "+refs/pull/${{ github.event.pull_request.number }}/head:pr-head"
+            echo "head=pr-head" >> "$GITHUB_OUTPUT"
+            echo "base=$(git merge-base HEAD pr-head)" >> "$GITHUB_OUTPUT"
+          else
+            echo "head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            echo "base=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Prompt logs are append-only (nobody may change or delete a logged line)
+        id: verify
+        shell: bash  # explicit bash enables pipefail, so a failed verify fails the step despite tee
+        run: python3 scripts/log_prompt.py verify --base "${{ steps.refs.outputs.base }}" --head "${{ steps.refs.outputs.head }}" | tee verify.txt
+      - name: Record the tampering as a GitHub issue
+        if: failure() && steps.verify.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "Changed or deleted AI prompt log lines were detected."
+            echo
+            echo "- Event: ${{ github.event_name }}"
+            echo "- By: @${{ github.actor }}"
+            echo "- Commit: ${{ steps.refs.outputs.head }} (${{ github.event.pull_request.html_url || github.event.compare }})"
+            echo
+            echo '```'
+            cat verify.txt
+            echo '```'
+          } > issue.md
+          gh issue create --repo "${{ github.repository }}" --title "AI prompt log tampering by ${{ github.actor }}" --body-file issue.md
+      - name: Note governance-file changes and missing logs
+        if: always()
+        run: |
+          changed="$(git diff --name-only "${{ steps.refs.outputs.base }}" "${{ steps.refs.outputs.head }}" -- AGENTS.md CLAUDE.md ai-governance.json scripts/ tests/ .claude/ .githooks/ .gitattributes .github/ 2>/dev/null || true)"
+          if [ -n "$changed" ]; then
+            echo "::warning::Governance files changed by ${{ github.actor }}: $(echo $changed)"
+            { echo "### Governance files changed by @${{ github.actor }}"; echo "$changed" | sed 's/^/- /'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if git diff --quiet "${{ steps.refs.outputs.base }}" "${{ steps.refs.outputs.head }}" -- .ai-analytics/ 2>/dev/null; then
+            echo "::warning::No new AI prompt log lines. If AI was used, the member's .ai-analytics log is missing."
+          fi

@@ -1,0 +1,14 @@
+{
+  "version": "3.0",
+  "project": "CHANGE_ME",
+  "store_prompt_text": true,
+  "log_dir": ".ai-analytics",
+  "rubric_note": "Fixed rubric. A prompt gets the category with the most keyword hits. On a tie, the category listed FIRST wins. No hits -> other. Keywords match at the start of a word ('push' matches 'pushing'). Change only with team agreement and note the date.",
+  "categories": [
+    {"name": "code_push_to_github", "keywords": ["push", "git push", "commit", "pull request", "open a pr", "create a pr", "raise a pr", "merge the", "merge branch", "github", "release", "tag v"]},
+    {"name": "code_deletion", "keywords": ["delete", "remove", "unused", "dead code", "drop", "obsolete", "clean up", "cleanup", "strip out", "get rid of"]},
+    {"name": "code_review", "keywords": ["review", "refactor", "readability", "maintainability", "code quality", "improve this", "check this code", "best practice", "lint", "rename"]},
+    {"name": "brainstorming", "keywords": ["brainstorm", "idea", "approach", "architecture", "design", "trade-off", "tradeoff", "plan", "propose", "compare", "which is better", "should we", "should i"]},
+    {"name": "code_generation", "keywords": ["implement", "generate", "write a", "write code", "write the", "create a", "create the", "build a", "build the", "scaffold", "add a", "add the", "new function", "new endpoint", "new page"]}
+  ]
+}
